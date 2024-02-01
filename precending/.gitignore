@@ -16,7 +16,6 @@ build/
 bin/
 !**/src/main/**/bin/
 !**/src/test/**/bin/
-application.yml
 application-dev.yml
 application-prod.yml
 
