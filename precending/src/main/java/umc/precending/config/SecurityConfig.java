@@ -2,17 +2,19 @@ package umc.precending.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import umc.precending.config.jwt.*;
 
+@Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
     private final JwtAuthenticationEntryPointHandler authenticationEntryPointHandler;
     private final JwtAccessDeniedHandler accessDeniedHandler;
     private final TokenProvider tokenProvider;
@@ -24,21 +26,17 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain configure(HttpSecurity http) throws Exception {
-        return http
-                .csrf().disable()
-                .formLogin().disable()
+        http.csrf(AbstractHttpConfigurer::disable)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .exceptionHandling(
+                        security -> security
+                                .authenticationEntryPoint(authenticationEntryPointHandler)
+                                .accessDeniedHandler(accessDeniedHandler))
+                .sessionManagement(
+                        security -> security
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .apply(new JwtSecurityConfig(tokenProvider));
 
-                .exceptionHandling()
-                .authenticationEntryPoint(authenticationEntryPointHandler)
-                .accessDeniedHandler(accessDeniedHandler)
-
-                .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-
-                .and()
-                .apply(new JwtSecurityConfig(tokenProvider))
-
-                .and().build();
+        return http.build();
     }
 }
