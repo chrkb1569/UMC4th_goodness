@@ -18,6 +18,7 @@ bin/
 !**/src/test/**/bin/
 application-dev.yml
 application-prod.yml
+src/main/generated
 
 ### IntelliJ IDEA ###
 application.properties
