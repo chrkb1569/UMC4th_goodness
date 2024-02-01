@@ -1,14 +1,15 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '2.7.13'
-	id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+	id 'org.springframework.boot' version '3.1.2'
+	id 'io.spring.dependency-management' version '1.1.2'
+	id "org.asciidoctor.jvm.convert" version "3.3.2"
 }
 
 group = 'umc'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	sourceCompatibility = '11'
+	sourceCompatibility = '17'
 }
 
 configurations {
@@ -22,33 +23,72 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// Web
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
-	implementation group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.445'
-	implementation group: 'org.seleniumhq.selenium', name: 'selenium-java', version: '4.11.0'
-	compileOnly 'org.projectlombok:lombok'
+
+	// DataBase
 	runtimeOnly 'com.mysql:mysql-connector-j'
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testImplementation 'org.springframework.security:spring-security-test'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
-	implementation 'io.springfox:springfox-boot-starter:3.0.0'
-	implementation 'javax.mail:mail:1.4.7'
-	// Spring Context Support
-	implementation 'org.springframework:spring-context-support:5.3.9'
+	// JPA
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
+	// QueryDsl
+	implementation "com.querydsl:querydsl-jpa:5.0.0:jakarta"
+	implementation "com.querydsl:querydsl-core"
+	implementation "com.querydsl:querydsl-collections"
+	annotationProcessor "com.querydsl:querydsl-apt:5.0.0:jakarta"
+	annotationProcessor "jakarta.annotation:jakarta.annotation-api"
+	annotationProcessor "jakarta.persistence:jakarta.persistence-api"
+
+	// Validation
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// Security
+	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation group: 'io.jsonwebtoken', name: 'jjwt-api', version: '0.11.2'
 	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-impl', version: '0.11.2'
 	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-jackson', version: '0.11.2'
 
+	// Lombok
+	annotationProcessor 'org.projectlombok:lombok'
+	compileOnly 'org.projectlombok:lombok'
+
+	// Test
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+
+	// S3
+	implementation group: 'com.amazonaws', name: 'aws-java-sdk-s3', version: '1.12.445'
+
+	// Swagger
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2'
+
+	// Selenium
+	implementation group: 'org.seleniumhq.selenium', name: 'selenium-java', version: '4.11.0'
+
+	// Mail
+	implementation 'javax.mail:mail:1.4.7'
+
+	// Spring Context Support
+	implementation 'org.springframework:spring-context-support:5.3.9'
+
 	// JSON
 	implementation 'org.json:json:20230227'
-
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+jar {
+	enabled = false
+}
+
+def querydslSrcDir = 'src/main/generated'
+clean {
+	delete file(querydslSrcDir)
+}
+tasks.withType(JavaCompile) {
+	options.generatedSourceOutputDirectory = file(querydslSrcDir)
 }
