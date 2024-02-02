@@ -3,6 +3,7 @@ package umc.precending.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -18,6 +19,8 @@ public class SecurityConfig {
     private final JwtAuthenticationEntryPointHandler authenticationEntryPointHandler;
     private final JwtAccessDeniedHandler accessDeniedHandler;
     private final TokenProvider tokenProvider;
+    private final String[] swaggerPath = {"/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/error"};
+    private final String AUTH_PATH = "/api/auth/**";
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
@@ -35,6 +38,11 @@ public class SecurityConfig {
                 .sessionManagement(
                         security -> security
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(
+                        security -> security
+                                .requestMatchers(HttpMethod.POST, AUTH_PATH).permitAll()
+                                .requestMatchers(swaggerPath).permitAll()
+                                .anyRequest().authenticated())
                 .apply(new JwtSecurityConfig(tokenProvider));
 
         return http.build();
