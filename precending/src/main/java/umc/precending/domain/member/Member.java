@@ -1,25 +1,43 @@
 package umc.precending.domain.member;
 
-import lombok.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+import jakarta.persistence.Lob;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import umc.precending.domain.base.BaseEntity;
 import umc.precending.domain.image.MemberImage;
-import umc.precending.dto.person.MemberUpdateRequestDto;
 
-import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static umc.precending.util.MessageProvider.MESSAGE_DEFAULT_INTRODUCTION;
+
 @Entity
 @Getter
-@Table(name = "member")
+@Table(name = "MEMBER")
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @DiscriminatorColumn
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Member extends BaseEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "member_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected Long id;
 
     @Column(name = "name", nullable = false)
@@ -28,20 +46,14 @@ public abstract class Member extends BaseEntity {
     @Column(name = "username", nullable = false)
     protected String username; // 사용자의 아이디
 
-    @Column(name = "birth", nullable = false)
-    protected String birth; // 출생/설립 연도
-
     @Column(name = "password", nullable = false)
     protected String password; // 비밀번호
 
     @Column(name = "email", nullable = false, unique = true)
     protected String email; // 이메일
 
-    @Column(name = "emailValidation", nullable = false)
-    protected boolean emailValidation; // 이메일 인증 여부
-
-    @Column(name = "introduction", nullable = false)
     @Lob
+    @Column(name = "introduction", nullable = false)
     protected String introduction; // 프로필 화면에서 노출시킬 소개글
 
     @Enumerated(value = EnumType.STRING)
@@ -49,6 +61,19 @@ public abstract class Member extends BaseEntity {
 
     @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY, mappedBy = "member", orphanRemoval = true)
     protected List<MemberImage> images = new ArrayList<>();
+
+    protected Member(String name, String password, String email) {
+        this.name = name;
+        this.username = email;
+        this.password = password;
+        this.email = email;
+        this.introduction = MESSAGE_DEFAULT_INTRODUCTION.getMessage();
+    }
+
+    public void editImage(List<MemberImage> images) {
+        this.images.clear();
+        saveImage(images);
+    }
 
     public void saveImage(List<MemberImage> images) {
         for(MemberImage image : images) {
@@ -58,13 +83,14 @@ public abstract class Member extends BaseEntity {
     }
 
     public void setPassword(String newPassword) {
-        this.password = newPassword; // 비밀번호 재설정
+        this.password = newPassword;
     }
 
-    public void update(MemberUpdateRequestDto request) {
-        this.name = request.getName();
-        this.birth = request.getBirth();
-        this.introduction = request.getIntroduction(); // 프로필 정보 수정
+    public void editName(String name) {
+        this.name = name;
+    }
+
+    public void editIntroduction(String introduction) {
+        this.introduction = introduction;
     }
 }
-

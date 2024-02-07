@@ -1,18 +1,18 @@
 package umc.precending.domain.image;
 
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import umc.precending.exception.image.ImageNotSupportedException;
 
-import javax.persistence.*;
 import java.util.Arrays;
 import java.util.UUID;
 
 @Entity
 @Getter
-@Table(name = "image")
+@Table(name = "IMAGE")
 @DiscriminatorColumn
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

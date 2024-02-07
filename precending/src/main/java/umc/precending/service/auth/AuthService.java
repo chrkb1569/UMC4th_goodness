@@ -8,7 +8,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.precending.config.jwt.TokenProvider;
-import umc.precending.domain.recommend.Recommend;
 import umc.precending.domain.member.Club;
 import umc.precending.domain.member.Corporate;
 import umc.precending.domain.member.Member;
@@ -23,31 +22,22 @@ import umc.precending.dto.token.TokenResponseDto;
 import umc.precending.exception.member.MemberDuplicateException;
 import umc.precending.exception.member.MemberLoginFailureException;
 import umc.precending.exception.member.MemberNotFoundException;
-import umc.precending.repository.recommendRepository.RecommendRepository;
-import umc.precending.repository.member.*;
+import umc.precending.repository.member.MemberRepository;
 import umc.precending.service.redis.RedisService;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    private final MemberRepository memberRepository;
-    private final PersonRepository personRepository;
-    private final CorporateRepository corporateRepository;
-    private final ClubRepository clubRepository;
-    private final RedisService redisService;
-    private final BCryptPasswordEncoder passwordEncoder;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
+    private final BCryptPasswordEncoder passwordEncoder;
+    private final MemberRepository memberRepository;
     private final TokenProvider tokenProvider;
-    private final RecommendRepository recommendRepository;
+    private final RedisService redisService;
 
     // 회원가입 - 개인
     @Transactional
     public void signUp(MemberPersonSignUpDto signUpDto) {
         Person personMember = getPersonMember(signUpDto);
-        List<Recommend> recommends = recommendRepository.selectRandom();
-        personMember.setMyTodayRecommendList(recommends);
         memberRepository.save(personMember);
     }
 
@@ -55,7 +45,6 @@ public class AuthService {
     @Transactional
     public void signUp(MemberClubSignUpDto signUpDto) {
         Club clubMember = getClubMember(signUpDto);
-        List<Recommend> recommends=recommendRepository.selectRandom();
         memberRepository.save(clubMember);
     }
 
@@ -63,7 +52,6 @@ public class AuthService {
     @Transactional
     public void signUp(MemberCorporateSignUpDto signUpDto) {
         Corporate corporateMember = getCorporateMember(signUpDto);
-        List<Recommend> recommends=recommendRepository.selectRandom();
         memberRepository.save(corporateMember);
     }
 
@@ -98,6 +86,45 @@ public class AuthService {
         return new TokenResponseDto(token.getAccessToken(), token.getRefreshToken());
     }
 
+    // 입력한 정보를 바탕으로 유효성을 검사한 뒤, Person 객체를 반환하는 로직
+    private Person getPersonMember(MemberPersonSignUpDto signUpDto) {
+        checkMemberDuplication(signUpDto.getEmail());
+
+        String encryptPassword = getEncryptPassword(signUpDto.getPassword());
+
+        return new Person(signUpDto.getName(), encryptPassword, signUpDto.getEmail());
+    }
+
+    // 입력한 정보를 바탕으로 유효성을 검사한 뒤, Club 객체를 반환하는 로직
+    private Club getClubMember(MemberClubSignUpDto signUpDto) {
+        checkMemberDuplication(signUpDto.getEmail());
+
+        String encryptPassword = getEncryptPassword(signUpDto.getPassword());
+
+        return new Club(signUpDto.getName(), encryptPassword, signUpDto.getEmail(),
+                signUpDto.getSchool(), signUpDto.getAddress());
+    }
+
+    // 입력한 정보를 바탕으로 유효성을 검사한 뒤, Corporate 객체를 반환하는 로직
+    private Corporate getCorporateMember(MemberCorporateSignUpDto signUpDto) {
+        checkMemberDuplication(signUpDto.getEmail());
+
+        String encryptPassword = getEncryptPassword(signUpDto.getPassword());
+
+        return new Corporate(signUpDto.getName(), encryptPassword, signUpDto.getEmail(), signUpDto.getRegistrationNumber());
+    }
+
+    // 동일한 이메일 주소로 가입한 사용자가 존재하는지 확인하는 메서드
+    private void checkMemberDuplication(String email) {
+        if(memberRepository.existsMemberByEmail(email))
+            throw new MemberDuplicateException();
+    }
+
+    // 사용자가 입력한 비밀번호를 인코딩하여 반환하는 로직
+    private String getEncryptPassword(String rawData) {
+        return passwordEncoder.encode(rawData);
+    }
+
     // 사용자가 로그인을 수행하면서 입력한 정보와 일치하는 계정이 있는지 확인하는 로직
     private void checkLoginValidation(MemberSignInDto signInDto) {
         Member findMember = memberRepository.findMemberByUsername(signInDto.getUsername())
@@ -109,30 +136,5 @@ public class AuthService {
     // 비밀번호가 일치하는지 확인하는 로직
     private boolean checkPwValidation(Member member, String raw) {
         return passwordEncoder.matches(raw, member.getPassword());
-    }
-
-    // 입력한 정보를 바탕으로 유효성을 검사한 뒤, Person 객체를 반환하는 로직
-    private Person getPersonMember(MemberPersonSignUpDto signUpDto) {
-        if(personRepository.existsPersonByEmail(signUpDto.getEmail())) throw new MemberDuplicateException();
-
-        return new Person(signUpDto.getName(), signUpDto.getBirth(),
-                passwordEncoder.encode(signUpDto.getPassword()), signUpDto.getEmail());
-    }
-
-    // 입력한 정보를 바탕으로 유효성을 검사한 뒤, Club 객체를 반환하는 로직
-    private Club getClubMember(MemberClubSignUpDto signUpDto) {
-        if(clubRepository.existsClubByEmail(signUpDto.getEmail())) throw new MemberDuplicateException();
-
-        return new Club(signUpDto.getName(), signUpDto.getBirth(), passwordEncoder.encode(signUpDto.getPassword()),
-                signUpDto.getEmail(), signUpDto.getType(), signUpDto.getSchool(), signUpDto.getAddress());
-    }
-
-    // 입력한 정보를 바탕으로 유효성을 검사한 뒤, Corporate 객체를 반환하는 로직
-    private Corporate getCorporateMember(MemberCorporateSignUpDto signUpDto) {
-        if(corporateRepository.existsCorporateByRegistrationNumberOrEmail(signUpDto.getRegistrationNumber(), signUpDto.getEmail()))
-            throw new MemberDuplicateException();
-
-        return new Corporate(signUpDto.getName(), signUpDto.getBirth(), passwordEncoder.encode(signUpDto.getPassword()),
-                signUpDto.getEmail(), signUpDto.getRegistrationNumber());
     }
 }
