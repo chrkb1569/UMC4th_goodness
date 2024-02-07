@@ -12,7 +12,6 @@ import java.io.IOException;
 @Service
 @RequiredArgsConstructor
 public class ImageServiceImpl implements ImageService {
-
     private final AmazonS3Client amazonS3Client;
 
     @Value("${cloud.aws.bucketName}")
