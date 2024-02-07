@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class TokenProvider implements InitializingBean {
-
     private final static String AUTHORIZATION_KEY = "auth";
     private final Long validationTime;
     private final Long refreshTokenValidationTime;
