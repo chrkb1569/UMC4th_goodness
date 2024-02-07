@@ -1,5 +1,6 @@
 package umc.precending.domain.image;
 
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,16 +10,13 @@ import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.web.multipart.MultipartFile;
 import umc.precending.domain.post.Post;
 
-import javax.persistence.*;
-
-@AllArgsConstructor
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostImage extends Image {
-
-    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
+    @ManyToOne(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Post post;
 
