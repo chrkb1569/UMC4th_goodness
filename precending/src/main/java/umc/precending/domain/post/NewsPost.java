@@ -1,59 +1,47 @@
 package umc.precending.domain.post;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import umc.precending.domain.category.Category;
 import umc.precending.domain.category.PostCategory;
 import umc.precending.domain.image.PostImage;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Lob;
 import java.util.List;
 
 @Entity
 @Getter
 @AllArgsConstructor
+@Table(name = "NEWS_POST")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class NewsPost extends Post {
     @Column(name = "newsUrl", nullable = false)
     private String newsUrl; // 뉴스에 접근하기 위한 뉴스 링크
 
-    @Column(name = "content", nullable = false)
-    @Lob
-    private String content; // 뉴스 본문
-
     public NewsPost(String writer, String newsUrl, String content,
-                    int year, int month, int day,
-                    List<PostCategory> categories, List<PostImage> images) {
-        this.writer = writer;
-        this.verifiable = true;
-        this.isVerified = false;
+                    int year, int month, int date,
+                    List<Category> categoryList, List<PostImage> imageList) {
+        super(year, month, date, content, writer, true, categoryList, imageList);
         this.newsUrl = newsUrl;
-        this.content = content;
-        this.year = year;
-        this.month = month;
-        this.day = day;
-        addCategories(categories);
-        addImages(images);
+    }
+
+    public void editPost(int year, int month, int date, String newsUrl, String content, List<Category> categories) {
+        editPrecedingDate(year, month, date);
+        updateNews(newsUrl, content);
+        this.postCategory = new PostCategory(categories);
+    }
+
+    public void editPost(int year, int month, int date, List<Category> categories) {
+        editPrecedingDate(year, month, date);
+        this.postCategory = new PostCategory(categories);
     }
 
     private void updateNews(String newsUrl, String content) {
         this.newsUrl = newsUrl;
         this.content = content;
-    }
-
-    public void editPost(int year, int month, int day, String newsUrl, String content) {
-        this.year = year;
-        this.month = month;
-        this.day = day;
-        updateNews(newsUrl, content);
-    }
-
-    public void editPost(int year, int month, int day) {
-        this.year = year;
-        this.month = month;
-        this.day = day;
     }
 }
