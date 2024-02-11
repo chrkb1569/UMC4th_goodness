@@ -5,15 +5,15 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import umc.precending.domain.image.Image;
 
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ImageDto {
     private String originalName;
     private String storedName;
     private String accessUrl;
 
-    public static <T extends Image> ImageDto toDto(T image) {
+    public static ImageDto toDto(Image image) {
         return new ImageDto(image.getOriginalName(), image.getStoredName(), image.getAccessUrl());
     }
 }
